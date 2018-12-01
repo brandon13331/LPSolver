@@ -29,6 +29,8 @@ public class LPSolver {
             operation = scanner.nextInt();
             if (operation == 1) {
                 setUp();
+                ansteesRule(dictionary);
+                break;
             } else
                 break;
         }
@@ -89,6 +91,60 @@ public class LPSolver {
         dictionary.setBasicVariables(basicVariables);
         dictionary.setObjectiveFunction(objectiveFunction);
         System.out.println("Setting up the initial dictionary...");
+    }
+
+    private void ansteesRule(Dictionary dictionary) {
+        System.out.println("Calculated using the Anstee's rule:");
+        System.out.println("Entering variable = X" + eVar);
+        System.out.println("Leaving variable = X" + lVar);
+
+        List<Double> newBasicVariable = new ArrayList<>();
+        double eVarCoefficient = 0;
+        for (int i = 0; i < dictionary.getBasicVariables().size(); i++) {
+            if (dictionary.getBasicVariables().get(i).get(0) == lVar) {
+                eVarCoefficient = dictionary.getBasicVariables().get(i).get(eVar + 1);
+                newBasicVariable = dictionary.getBasicVariables().get(i);
+            }
+        }
+        newBasicVariable.set(0, (double) eVar);
+
+        for (int i = 1; i < newBasicVariable.size(); i++) {
+            double number = newBasicVariable.get(i);
+            if (number == 0.0) {
+            } else {
+                number = number / -eVarCoefficient;
+                newBasicVariable.set(i, number);
+            }
+        }
+        newBasicVariable.set(eVar + 1, 0.0);
+        newBasicVariable.set(lVar + 1, 1.0 / eVarCoefficient);
+
+        List<Double> clonedList = new ArrayList<>();
+        clonedList.addAll(newBasicVariable);
+
+        for (int x = 0; x < dictionary.getBasicVariables().size(); x++) {
+            if (dictionary.getBasicVariables().get(x).get(0) == eVar) {
+            } else {
+                double coefficient = dictionary.getBasicVariables().get(x).get(eVar + 1);
+                for (int y = 1; y < clonedList.size(); y++) {
+                    double number1 = clonedList.get(y);
+                    number1 = number1 * coefficient;
+                    double number2 = dictionary.getBasicVariables().get(x).get(y);
+                    dictionary.getBasicVariables().get(x).set(y, number1 + number2);
+                    dictionary.getBasicVariables().get(x).set(eVar + 1, 0.0);
+                }
+            }
+        }
+        double coefficient = dictionary.getObjectiveFunction().get(eVar);
+        for (int i = 1; i < clonedList.size(); i++) {
+            clonedList.set(i, coefficient * clonedList.get(i));
+        }
+        for (int i = 0; i < clonedList.size() - 1; i++) {
+            dictionary.getObjectiveFunction().set(i, dictionary.getObjectiveFunction().get(i) + clonedList.get(i + 1));
+        }
+        dictionary.getObjectiveFunction().set(eVar, 0.0);
+        System.out.println(dictionary.getBasicVariables());
+        System.out.println(dictionary.getObjectiveFunction());
     }
 
     private int getIndexOfMaxValue(List<Double> list) {
